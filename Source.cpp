@@ -13,6 +13,7 @@ double offsetX = 0.0;
 double offsetY = 0.0;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 int main() {
 	if (!glfwInit()) LOG("GLFW: failed to init")
@@ -29,6 +30,7 @@ int main() {
 	
 	glfwSetErrorCallback([](int e, const char *s) { std::cerr << s << std::endl; });
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	glfwMakeContextCurrent(window);
 
 	if (glewInit() != 0) LOG("GLEW: failed to init")
@@ -60,16 +62,16 @@ int main() {
 	"uniform dvec2 offset;													\n"
 	"																		\n"
 	"double n = 0.0;														\n"
-	"double prag = 100.0;													\n"
+	"double threshold = 100.0;												\n"
 	"																		\n"
 	"double mandelbrot(dvec2 c) {											\n"
 	"	dvec2 z = vec2(0.0,0.0);											\n"
 	"	for(int i = 0; i < itr; i++){										\n"
-	"		dvec2 znov;														\n"
-	"		znov.x = (z.x * z.x) - (z.y * z.y) + c.x;						\n"
-	"		znov.y = (2.0 * z.x * z.y) +c.y;								\n"
-	"		z = znov;														\n"
-	"		if((z.x * z.x) + (z.y * z.y) > prag)break;						\n"
+	"		dvec2 znew;														\n"
+	"		znew.x = (z.x * z.x) - (z.y * z.y) + c.x;						\n"
+	"		znew.y = (2.0 * z.x * z.y) +c.y;								\n"
+	"		z = znew;														\n"
+	"		if((z.x * z.x) + (z.y * z.y) > threshold)break;					\n"
 	"		n++;															\n"
 	"	}																	\n"
 	"	return n / float(itr);												\n"
@@ -184,4 +186,28 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		itr += 50;
 	else if (key == GLFW_KEY_E && action == GLFW_PRESS)
 		(itr > 100) ? itr -= 50 : itr = 50;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	if (yoffset != 0) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		//LOG(xpos)
+		//LOG(ypos)
+
+		double dx = (xpos - WIDTH / 2) / zoom - offsetX;
+		double dy = (HEIGHT - ypos - HEIGHT / 2) / zoom - offsetY;
+		offsetX = -dx;
+		offsetY = -dy;
+		if (yoffset < 0)
+			zoom /= 1.2;
+		else
+			zoom *= 1.2;
+
+		dx = (xpos - WIDTH / 2) / zoom;
+		dy = (HEIGHT - ypos - HEIGHT / 2) / zoom;
+		offsetX += dx;
+		offsetY += dy;
+	}
 }
