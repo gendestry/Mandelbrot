@@ -4,16 +4,22 @@
 
 #define LOG(x) std::cout << x << std::endl;
 
-const int WIDTH  = 800;
-const int HEIGHT = 600;
+int WIDTH  = 800;
+int HEIGHT = 600;
 
 int itr = 200;
 double zoom = 100.0;
 double offsetX = 0.0;
 double offsetY = 0.0;
 
+bool dragging = false;
+double oldX, oldY;
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void window_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
 	if (!glfwInit()) LOG("GLFW: failed to init")
@@ -27,10 +33,14 @@ int main() {
 		LOG("GLFW: failed to create the window")
 		glfwTerminate();
 	}
-	
+
 	glfwSetErrorCallback([](int e, const char *s) { std::cerr << s << std::endl; });
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetWindowSizeCallback(window, window_size_callback);
+
 	glfwMakeContextCurrent(window);
 
 	if (glewInit() != 0) LOG("GLEW: failed to init")
@@ -166,11 +176,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, 1);
 	}
 
-	if (key == GLFW_KEY_KP_ADD && action == GLFW_PRESS) {
-		zoom *= 2;
-	}
-	else if (key == GLFW_KEY_KP_SUBTRACT && action == GLFW_PRESS) {
-		zoom /= 2;
+	if (key == GLFW_KEY_KP_0 && action == GLFW_PRESS) {
+		itr = 200;
+		zoom = 100.0;
+		offsetX = 0.0;
+		offsetY = 0.0;
 	}
 
 	if (key == GLFW_KEY_A && action == GLFW_PRESS)
@@ -182,19 +192,43 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	else if (key == GLFW_KEY_S && action == GLFW_PRESS)
 		offsetY += 20 / zoom;
 
+	if (key == GLFW_KEY_KP_ADD && action == GLFW_PRESS)
+		zoom *= 2;
+	else if (key == GLFW_KEY_KP_SUBTRACT && action == GLFW_PRESS)
+		zoom /= 2;
+
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
 		itr += 50;
 	else if (key == GLFW_KEY_E && action == GLFW_PRESS)
 		(itr > 100) ? itr -= 50 : itr = 50;
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		glfwGetCursorPos(window, &oldX, &oldY);
+		dragging = true;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+		dragging = false;
+}
+
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (dragging) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		offsetX += (xpos - oldX) / zoom;
+		offsetY += (oldY - ypos) / zoom;
+
+		oldX = xpos;
+		oldY = ypos;
+	}
+}
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	if (yoffset != 0) {
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-
-		//LOG(xpos)
-		//LOG(ypos)
 
 		double dx = (xpos - WIDTH / 2) / zoom - offsetX;
 		double dy = (HEIGHT - ypos - HEIGHT / 2) / zoom - offsetY;
@@ -210,4 +244,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		offsetX += dx;
 		offsetY += dy;
 	}
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
+	// TODO: add conversion factor to everything
 }
