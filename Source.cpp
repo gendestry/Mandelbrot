@@ -4,6 +4,10 @@
 
 #define LOG(x) std::cout << x << std::endl;
 
+#ifdef _WIN32 // hides console if on windows
+	#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif
+
 int WIDTH  = 800;
 int HEIGHT = 600;
 
@@ -14,6 +18,8 @@ double offsetY = 0.0;
 
 bool dragging = false;
 double oldX, oldY;
+
+unsigned int shaderProgram;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
@@ -113,7 +119,7 @@ int main() {
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 	
-	unsigned int vertex, fragment, program;
+	unsigned int vertex, fragment;
 	int success;
 	char infoLog[1024];
 
@@ -135,27 +141,23 @@ int main() {
 		std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: FRAGMENT\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
 	}
 
-	program = glCreateProgram();
-	glAttachShader(program, vertex);
-	glAttachShader(program, fragment);
-	glLinkProgram(program);
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertex);
+	glAttachShader(shaderProgram, fragment);
+	glLinkProgram(shaderProgram);
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 
-	glUseProgram(program);
+	glUseProgram(shaderProgram);
 	
-	glUniform2d(glGetUniformLocation(program, "screenSize"), (double)WIDTH, (double)HEIGHT);
-	glUniform2d(glGetUniformLocation(program, "offset"), offsetX, offsetY);
-	glUniform1d(glGetUniformLocation(program, "zoom"), zoom);
-	glUniform1i(glGetUniformLocation(program, "itr"), itr);
+	glUniform2d(glGetUniformLocation(shaderProgram, "screenSize"), (double)WIDTH, (double)HEIGHT);
+	glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
+	glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
+	glUniform1i(glGetUniformLocation(shaderProgram, "itr"), itr);
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT);
-		
-		glUniform1i(glGetUniformLocation(program, "itr"), itr);
-		glUniform1d(glGetUniformLocation(program, "zoom"), zoom);
-		glUniform2d(glGetUniformLocation(program, "offset"), offsetX, offsetY);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -165,7 +167,7 @@ int main() {
 
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
-	glDeleteProgram(program);
+	glDeleteProgram(shaderProgram);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -201,6 +203,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		itr += 50;
 	else if (key == GLFW_KEY_E && action == GLFW_PRESS)
 		(itr > 100) ? itr -= 50 : itr = 50;
+
+	glUniform1i(glGetUniformLocation(shaderProgram, "itr"), itr);
+	glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
+	glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -222,6 +228,8 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 
 		oldX = xpos;
 		oldY = ypos;
+
+		glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 	}
 }
 
@@ -243,10 +251,15 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		dy = (HEIGHT - ypos - HEIGHT / 2) / zoom;
 		offsetX += dx;
 		offsetY += dy;
+
+		glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
+		glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 	}
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
-	// TODO: add conversion factor to everything
+	WIDTH = width;
+	HEIGHT = height;
+	glUniform2d(glGetUniformLocation(shaderProgram, "screenSize"), (double)WIDTH, (double)HEIGHT);
 }
