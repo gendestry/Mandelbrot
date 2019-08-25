@@ -12,4 +12,4 @@ Required libraries:
 - glfw
 - glew
 
-To build it on linux use **g++ Source.cpp -lglfw -lGL -lGLEW -o Source**. Be sure to have te required libraries installed! 
+To build it on linux use the **make** command or build it manually by running **g++ Source.cpp -lglfw -lGL -lGLEW -o Source**. Be sure to have te required libraries installed! 
