@@ -69,7 +69,7 @@ int main() {
 	};
 
 	const char* vertexSource =
-	"#version 330 core                      \n"
+	"#version 410 core                      \n"
 	"layout(location = 0) in vec2 pos;	    \n"
 	"                                       \n"
 	"void main() {                          \n"
@@ -77,20 +77,20 @@ int main() {
 	"}                                      \n";
 
 	const char* fragmentSource =
-	"#version 330 core														\n"
+	"#version 410 core														\n"
 	"																		\n"
 	"uniform int itr;														\n"
-	"uniform float zoom;													\n"
-	"uniform vec2 screenSize;												\n"
-	"uniform vec2 offset;													\n"
+	"uniform double zoom;													\n"
+	"uniform dvec2 screenSize;												\n"
+	"uniform dvec2 offset;													\n"
 	"																		\n"
-	"float n = 0.0;												    		\n"
-	"float threshold = 100.0;												\n"
+	"double n = 0.0;														\n"
+	"double threshold = 100.0;												\n"
 	"																		\n"
-	"float mandelbrot(vec2 c) {										    	\n"
-	"	vec2 z = vec2(0.0,0.0);											    \n"
+	"double mandelbrot(dvec2 c) {											\n"
+	"	dvec2 z = vec2(0.0,0.0);											\n"
 	"	for(int i = 0; i < itr; i++){										\n"
-	"		vec2 znew;														\n"
+	"		dvec2 znew;														\n"
 	"		znew.x = (z.x * z.x) - (z.y * z.y) + c.x;						\n"
 	"		znew.y = (2.0 * z.x * z.y) +c.y;								\n"
 	"		z = znew;														\n"
@@ -109,12 +109,12 @@ int main() {
 	"}																		\n"
 	"																		\n"
 	"void main() {															\n"
-	"	vec2 coord = vec2(gl_FragCoord.xy);					    			\n"
-	"	float t = mandelbrot(((coord - screenSize/2)/zoom) - offset);	    \n"
+	"	dvec2 coord = dvec2(gl_FragCoord.xy);								\n"
+	"	double t = mandelbrot(((coord - screenSize/2)/zoom) - offset);	    \n"
 	"	if(gl_FragCoord.x < 40){											\n"
 	"		gl_FragColor = vec4(1.0);										\n"
 	"	}																	\n"
-	"	gl_FragColor = map_to_color(t);					        			\n"
+	"	gl_FragColor = map_to_color(float(t));								\n"
 	"}																		\n";
 
 	unsigned int vao, vbo;
@@ -158,9 +158,9 @@ int main() {
 
 	glUseProgram(shaderProgram);
 	
-	glUniform2f(glGetUniformLocation(shaderProgram, "screenSize"), (float)WIDTH, (float)HEIGHT);
-	glUniform2f(glGetUniformLocation(shaderProgram, "offset"), (float)offsetX, (float)offsetY);
-	glUniform1f(glGetUniformLocation(shaderProgram, "zoom"), (float)zoom);
+	glUniform2d(glGetUniformLocation(shaderProgram, "screenSize"), (double)WIDTH, (double)HEIGHT);
+	glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
+	glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
 	glUniform1i(glGetUniformLocation(shaderProgram, "itr"), itr);
 
 	while (!glfwWindowShouldClose(window)) {
@@ -171,7 +171,7 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-	
+
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	glDeleteProgram(shaderProgram);
@@ -212,8 +212,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		(itr > 100) ? itr -= 50 : itr = 50;
 
 	glUniform1i(glGetUniformLocation(shaderProgram, "itr"), itr);
-	glUniform1f(glGetUniformLocation(shaderProgram, "zoom"), (float)zoom);
-	glUniform2f(glGetUniformLocation(shaderProgram, "offset"), (float)offsetX, (float)offsetY);
+	glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
+	glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -236,7 +236,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 		oldX = xpos;
 		oldY = ypos;
 
-		glUniform2f(glGetUniformLocation(shaderProgram, "offset"), (float)offsetX, (float)offsetY);
+		glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 	}
 }
 
@@ -259,8 +259,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		offsetX += dx;
 		offsetY += dy;
 
-		glUniform1f(glGetUniformLocation(shaderProgram, "zoom"), (float)zoom);
-		glUniform2f(glGetUniformLocation(shaderProgram, "offset"), (float)offsetX, (float)offsetY);
+		glUniform1d(glGetUniformLocation(shaderProgram, "zoom"), zoom);
+		glUniform2d(glGetUniformLocation(shaderProgram, "offset"), offsetX, offsetY);
 	}
 }
 
@@ -268,5 +268,5 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 	WIDTH = width;
 	HEIGHT = height;
-	glUniform2f(glGetUniformLocation(shaderProgram, "screenSize"), (float)WIDTH, (float)HEIGHT);
+	glUniform2d(glGetUniformLocation(shaderProgram, "screenSize"), (double)WIDTH, (double)HEIGHT);
 }
