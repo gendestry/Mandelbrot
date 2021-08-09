@@ -1,5 +1,20 @@
-all:
-	g++ `pkg-config --cflags glfw3 glew` -o Source Source.cpp `pkg-config --static --libs glfw3 glew`
+.PHONY: all run clean
+
+SOURCE := Source.cpp
+BINARY := Mandelbrot
+DEPS   := glfw3 glew
+
+CFLAGS := -Wall
+#LIBS   := $$(pkg-config --static --cflags --libs $(DEPS))
+LIBS   := $$(pkg-config --cflags --libs $(DEPS))
+
+all: $(BINARY)
+
+$(BINARY): $(SOURCE)
+	$(CXX) $(CFLAGS) $(LIBS) -o $@ $^
 
 run:
-	./Source
+	./$(BINARY)
+
+clean:
+	rm -f ./$(BINARY)
