@@ -5,8 +5,8 @@ BINARY := Mandelbrot
 DEPS   := glfw3 glew
 
 CFLAGS := -Wall
-#LIBS   := $$(pkg-config --static --cflags --libs $(DEPS))
-LIBS   := $$(pkg-config --cflags --libs $(DEPS))
+#LIBS   := $(shell pkg-config --static --cflags --libs $(DEPS))
+LIBS   := $(shell pkg-config --cflags --libs $(DEPS))
 
 all: $(BINARY)
 
